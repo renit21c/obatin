@@ -68,12 +68,17 @@ class NotificationService {
 
         await _flutterLocalNotificationsPlugin.initialize(
           initializationSettings,
-          onDidReceiveNotificationResponse: (NotificationResponse response) {
-            // Aksi saat notifikasi diklik
-            if (response.payload != null) {
-              _sendWhatsAppToCaregiver(response.payload!);
-            }
-          },
+          onDidReceiveNotificationResponse:
+              (NotificationResponse response) async {
+                try {
+                  // Aksi saat notifikasi diklik
+                  if (response.payload != null) {
+                    await _sendWhatsAppToCaregiver(response.payload!);
+                  }
+                } catch (e) {
+                  _logger.warning('Failed to handle notification response: $e');
+                }
+              },
         );
         _logger.info('Notification service initialized successfully');
         _isInitialized = true;
@@ -177,7 +182,12 @@ class NotificationService {
   // Fungsi Membatalkan Semua Notifikasi
   Future<void> cancelAllNotifications() async {
     await _ensureInitialized(); // Ensure initialized
-    await _flutterLocalNotificationsPlugin.cancelAll();
+    try {
+      await _flutterLocalNotificationsPlugin.cancelAll();
+    } catch (e) {
+      _logger.warning('Failed to cancel all notifications: $e');
+      // Do not rethrow to allow scheduling to proceed
+    }
   }
 
   // Fungsi Test Notifikasi (untuk debugging)
@@ -191,10 +201,13 @@ class NotificationService {
 
   // Fungsi Test Scheduled Notification (untuk debugging)
   Future<void> testScheduledNotification() async {
+    // Cancel all previous notifications to avoid conflicts and stale data
+    await cancelAllNotifications();
+
     final now = DateTime.now();
     final testTime = now.add(
-      const Duration(minutes: 1),
-    ); // Schedule for 1 minute from now
+      const Duration(minutes: 2),
+    ); // Schedule for 2 minutes from now
 
     await scheduleNotification(
       id: 999998,
@@ -233,6 +246,7 @@ class NotificationService {
           showWhen: true,
           playSound: true,
           enableVibration: true,
+          fullScreenIntent: false,
         ),
         iOS: DarwinNotificationDetails(
           presentAlert: true,
@@ -300,12 +314,12 @@ class NotificationService {
         );
 
         // Schedule the local notification
-        await _flutterLocalNotificationsPlugin.zonedSchedule<void>(
+        await _flutterLocalNotificationsPlugin.zonedSchedule(
           id,
           title,
           body,
           scheduledDate,
-          const NotificationDetails(
+          NotificationDetails(
             android: AndroidNotificationDetails(
               'channel_id_obat',
               'Pengingat Obat',
@@ -314,7 +328,7 @@ class NotificationService {
               priority: Priority.high,
               playSound: true,
               enableVibration: true, // Enable vibration
-              fullScreenIntent: true, // Show as heads-up notification
+              fullScreenIntent: false, // Show as heads-up notification
             ),
             iOS: DarwinNotificationDetails(
               presentAlert: true,
@@ -328,6 +342,7 @@ class NotificationService {
               ? DateTimeComponents.time
               : null, // Conditional repetition
           payload: body, // Kirim isi pesan ke fungsi klik
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         );
         _logger.info(
           'Notification scheduled successfully: $title at $scheduledDate (ID: $id)',
@@ -344,7 +359,7 @@ class NotificationService {
   }
 
   // Fungsi Kirim WA ke Caregiver (Semi-Otomatis)
-  void _sendWhatsAppToCaregiver(String message) async {
+  Future<void> _sendWhatsAppToCaregiver(String message) async {
     final prefsHelper = SharedPreferencesHelper();
     final User? user = await prefsHelper.getLoggedInUser();
 
