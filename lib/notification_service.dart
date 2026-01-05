@@ -104,9 +104,9 @@ class NotificationService {
   // Create notification channel for Android
   Future<void> _createNotificationChannel() async {
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'channel_id_obat', // id
-      'Pengingat Obat', // title
-      description: 'Channel untuk alarm minum obat', // description
+      'channel_id_obat_v2', // ubah ID
+      'Pengingat Obat',
+      description: 'Channel untuk alarm minum obat',
       importance: Importance.max,
       playSound: true,
       enableVibration: true,
@@ -190,33 +190,9 @@ class NotificationService {
     }
   }
 
-  // Fungsi Test Notifikasi (untuk debugging)
-  Future<void> testNotification() async {
-    await showNotification(
-      id: 999999,
-      title: 'Test Notification',
-      body: 'This is a test notification to check if notifications work.',
-    );
-  }
 
-  // Fungsi Test Scheduled Notification (untuk debugging)
-  Future<void> testScheduledNotification() async {
-    // Cancel all previous notifications to avoid conflicts and stale data
-    await cancelAllNotifications();
 
-    final now = DateTime.now();
-    final testTime = now.add(
-      const Duration(minutes: 2),
-    ); // Schedule for 2 minutes from now
 
-    await scheduleNotification(
-      id: 999998,
-      title: 'Test Scheduled Notification',
-      body: 'This is a test scheduled notification.',
-      scheduledDateTime: testTime,
-      repeatDaily: false,
-    );
-  }
 
   // Fungsi Menampilkan Notifikasi Sederhana
   Future<void> showNotification({
@@ -233,20 +209,17 @@ class NotificationService {
         return;
       }
 
-      // Ensure channel is created
-      await _createNotificationChannel();
 
       const NotificationDetails notificationDetails = NotificationDetails(
         android: AndroidNotificationDetails(
-          'channel_id_obat',
+          'channel_id_obat_v2',
           'Pengingat Obat',
           channelDescription: 'Channel untuk alarm minum obat',
           importance: Importance.max,
           priority: Priority.high,
-          showWhen: true,
           playSound: true,
           enableVibration: true,
-          fullScreenIntent: false,
+          fullScreenIntent: true, // ubah ke true
         ),
         iOS: DarwinNotificationDetails(
           presentAlert: true,
@@ -336,14 +309,13 @@ class NotificationService {
               presentSound: true,
             ),
           ),
-          uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
           matchDateTimeComponents: repeatDaily
               ? DateTimeComponents.time
               : null, // Conditional repetition
           payload: body, // Kirim isi pesan ke fungsi klik
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         );
+
         _logger.info(
           'Notification scheduled successfully: $title at $scheduledDate (ID: $id)',
         );
@@ -356,7 +328,7 @@ class NotificationService {
       _logger.severe('Failed to schedule notification: $e', e, stackTrace);
       rethrow;
     }
-  }
+  }   // <-- ini penutup fungsi scheduleNotification
 
   // Fungsi Kirim WA ke Caregiver (Semi-Otomatis)
   Future<void> _sendWhatsAppToCaregiver(String message) async {

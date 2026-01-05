@@ -437,56 +437,7 @@ class _HomeScreenState extends State<HomeScreen> {
             color: primaryBlue,
           ),
         ),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton(
-              onPressed: () async {
-                try {
-                  await NotificationService().testNotification();
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Test notification sent!')),
-                  );
-                } catch (e) {
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Failed to send test notification: $e'),
-                    ),
-                  );
-                }
-              },
-              child: const Text('Test Notification'),
-            ),
-            const SizedBox(width: 10),
-            ElevatedButton(
-              onPressed: () async {
-                try {
-                  await NotificationService().testScheduledNotification();
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Test scheduled notification set for 1 minute from now!',
-                      ),
-                    ),
-                  );
-                } catch (e) {
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Failed to schedule test notification: $e'),
-                    ),
-                  );
-                }
-              },
-              child: const Text('Test Scheduled'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 15),
+        const SizedBox(height: 15), // sebelumnya 10 + Row, diganti jadi 15 agar proporsional
         Container(
           width: 260,
           height: 260,

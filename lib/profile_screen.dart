@@ -304,7 +304,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // --- FUNGSI FAQ & SUPPORT ---
   void _launchFAQSupport() async {
-    const url = 'https://example.com/faq-support'; // Placeholder URL
+    const url = 'https://obatin.netlify.app/'; // Placeholder URL
     final Uri uri = Uri.parse(url);
     try {
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {

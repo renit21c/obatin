@@ -1,4 +1,3 @@
-import org.gradle.api.JavaVersion
 import java.util.Properties
 
 plugins {
@@ -10,16 +9,21 @@ plugins {
 val localProperties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
-    localPropertiesFile.inputStream().use { stream ->
-        localProperties.load(stream)
-    }
+    localProperties.load(localPropertiesFile.inputStream())
 }
 
 val flutterVersionCode = localProperties.getProperty("flutter.versionCode")?.toInt() ?: 1
 val flutterVersionName = localProperties.getProperty("flutter.versionName") ?: "1.0"
 
+// 🔑 Load keystore properties
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(keystorePropertiesFile.inputStream())
+}
+
 android {
-    namespace = "com.example.obatin"
+    namespace = "com.obatin.app"
     compileSdk = 36
 
     compileOptions {
@@ -28,21 +32,33 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
 
+    // ✅ pakai cara lama, aman untuk Flutter
     kotlinOptions {
         jvmTarget = "11"
     }
 
     defaultConfig {
-        applicationId = "com.example.obatin"
+        applicationId = "com.obatin.app"
         minSdk = flutter.minSdkVersion
         targetSdk = 36
         versionCode = flutterVersionCode
         versionName = flutterVersionName
     }
 
+    signingConfigs {
+        create("release") {
+            keyAlias = keystoreProperties["keyAlias"] as String
+            keyPassword = keystoreProperties["keyPassword"] as String
+            storeFile = file(keystoreProperties["storeFile"] as String)
+            storePassword = keystoreProperties["storePassword"] as String
+        }
+    }
+
     buildTypes {
-        release {
-            signingConfig = signingConfigs.getByName("debug")
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
